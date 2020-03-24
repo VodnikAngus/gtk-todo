@@ -1,6 +1,8 @@
 #ifndef WINDOWS_H
 #define WINDOWS_H
 
+#include "razno.h"
+
 // Makroi
 
 #define KC "\\"
@@ -9,6 +11,6 @@
 
 // Funkcije
 
-char **spisakfoldera(char *putanja);
+struct lista *spisakfoldera(char *putanja);
 
 #endif /* WINDOWS_H */
