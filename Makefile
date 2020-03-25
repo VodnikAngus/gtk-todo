@@ -3,7 +3,7 @@ IZLAZ=to-do
 ifeq ($(OS),Windows_NT)
 	PLATFORMA=windows
 else
-	PLATFORMA=windows
+	PLATFORMA=linux
 endif
 
 all: ./*
