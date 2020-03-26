@@ -4,37 +4,17 @@
 #include <string.h>
 #include "widgets/task.c"
 
-#if (defined(_WIN32) || defined(_WIN64))
-#include "lib/windows.h"
-#else
-#include "lib/linux.h"
-#endif
-
-#include "lib/razno.h"
+#include "src/liste.h"
 
 static void activate(GtkApplication *app, gpointer user_data) {
   GtkWidget *window = gtk_application_window_new(app);
   gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
+  GdkGeometry min_size;
+  min_size.min_width = 600;
+  gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL, &min_size,
+                                GDK_HINT_MIN_SIZE);
 
-  GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
-
-  // GtkWidget *list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  GtkWidget *tree = gtk_tree_view_new();
-
-  gtk_container_add(GTK_CONTAINER(scroll), tree);
-  gtk_container_add(GTK_CONTAINER(window), scroll);
-  struct lista *l = spisakfoldera("db");
-  struct clan *folder = l->prvi;
-
-  while (folder) {
-    GtkWidget *column = gtk_tree_view_column_new();
-    gtk_tree_view_column_pack_end(GTK_TREE_VIEW_COLUMN(column),
-                                  task(folder->ime), 1);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
-                                GTK_TREE_VIEW_COLUMN(column));
-    // gtk_box_pack_start(GTK_BOX(list), task(folder->ime), 0, 0, 0);
-    folder = folder->sledeci;
-  }
+  gtk_container_add(GTK_CONTAINER(window), listeW());
 
   gtk_widget_show_all(window);
 }
