@@ -10,9 +10,8 @@ GtkWidget *listeW() {
 
   gtk_widget_set_size_request(sidebar, 300, 300);
   gtk_box_pack_start(GTK_BOX(box), sidebar, FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(box), stack, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(box), stack, TRUE, TRUE, 0);
   gtk_stack_sidebar_set_stack(GTK_STACK_SIDEBAR(sidebar), GTK_STACK(stack));
-
   struct lista *l = spisakfoldera("db");
   struct clan *folder = l->prvi;
 
