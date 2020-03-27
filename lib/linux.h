@@ -11,6 +11,8 @@
 
 // Funkcije
 
-struct lista *spisakfoldera(char *putanja);
+struct lista *spisakfoldera(const char *putanja);
+int napravifolder(const char *putanja, char *ime);
+int obrisifolder(const char *putanja, char *ime);
 
 #endif /* LINUX_H */

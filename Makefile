@@ -11,5 +11,5 @@ all: ./*
 	#rm -f ./bin/${IZLAZ}
 
 proba: ./*
-	gcc proba.c `pkg-config --cflags --libs gtk+-3.0` && ./a.out
+	gcc proba.c lib/${PLATFORMA}.c lib/razno.c `pkg-config --cflags --libs gtk+-3.0` && ./a.out
 	rm -f a.out
