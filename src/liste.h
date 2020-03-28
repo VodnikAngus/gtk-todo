@@ -4,11 +4,7 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-#if (defined(_WIN32) || defined(_WIN64))
-#include "../lib/windows.h"
-#else
-#include "../lib/linux.h"
-#endif
+#include "../lib/fajlovi.h"
 
 #include "../lib/razno.h"
 

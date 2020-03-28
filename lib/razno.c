@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int dodajl(struct lista* l, char* tekst) {
+int dodajl(struct lista* l, const char* tekst) {
   struct clan* novi = malloc(sizeof(struct clan));
   novi->ime = malloc(sizeof(char) * (strlen(tekst) + 1));
   if (!novi && !novi->ime) return 0;

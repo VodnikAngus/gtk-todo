@@ -18,7 +18,7 @@ struct clan {
 
 // Funkcije
 
-int dodajl(struct lista* l, char* tekst);
+int dodajl(struct lista* l, const char* tekst);
 void brisil(struct lista* l);
 
 #endif /* RAZNO_H */
