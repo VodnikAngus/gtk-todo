@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 struct lista *spisakfoldera(const gchar *putanja) {
-  GError **greska;
+  GError **greska = NULL;
   GDir *dir = g_dir_open(putanja, 0, greska);
 
   if (!dir) exit(1);
@@ -38,7 +38,7 @@ int obrisifolder(const gchar *putanja, const gchar *ime) {
   if (!folder) return -1;
   sprintf(folder, "%s" KC "%s", putanja, ime);
 
-  GError **greska;
+  GError **greska = NULL;
   GDir *dir = g_dir_open(folder, 0, greska);
 
   if (!dir) exit(1);

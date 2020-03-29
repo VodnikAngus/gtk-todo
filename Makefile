@@ -1,17 +1,22 @@
-IZLAZ=to-do
+IME=to-do
+CFLAGS=-O2 -Wall `pkg-config --cflags --libs gtk+-3.0`
+LIBS=lib/*.c src/*.c
 
 ifeq ($(OS),Windows_NT)
 	PLATFORMA=windows
-	IME=a.exe
+	EXT=.exe
+	CFLAGS+=-mwindows
+	IZLAZ=./bin/${PLATFORMA}/bin/${IME}
 else
 	PLATFORMA=linux
-	IME=a.out
+	EXT=
+	IZLAZ=./bin/${PLATFORMA}/${IME}
 endif
 
 all: ./*
-	gcc main.c lib/fajlovi.c lib/razno.c  src/*.c -o ./bin/${PLATFORMA}/${IZLAZ} `pkg-config --cflags --libs gtk+-3.0` && ./bin/${PLATFORMA}/${IZLAZ}
-	rm -f ./bin/${PLATFORMA}/${IZLAZ}
+	gcc main.c ${LIBS} -o ${IZLAZ}${EXT} ${CFLAGS} && ${IZLAZ}${EXT}
+	#rm -f ./bin/${PLATFORMA}/${IZLAZ}
 
 proba: ./*
-	gcc proba.c lib/fajlovi.c lib/razno.c  `pkg-config --cflags --libs gtk+-3.0` && ./${IME}
-	rm -f ${IME}
+	gcc test.c ${LIBS} -o test${EXT} ${CFLAGS} && test${EXT}
+	rm -f test${EXT}

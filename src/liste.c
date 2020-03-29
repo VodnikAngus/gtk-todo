@@ -1,4 +1,5 @@
 #include "liste.h"
+
 #include "zadaci.h"
 
 GtkWidget *listeW() {
@@ -16,9 +17,12 @@ GtkWidget *listeW() {
   struct clan *folder = l->prvi;
 
   GtkWidget **redovi = malloc(l->duz * sizeof(GtkWidget *));
+  int i = 0;
   while (folder) {
     GtkWidget *red = zadaciW(folder->ime);
     gtk_stack_add_titled(GTK_STACK(stack), red, folder->ime, folder->ime);
+    redovi[i] = red;
+    i++;
     folder = folder->sledeci;
   }
 
