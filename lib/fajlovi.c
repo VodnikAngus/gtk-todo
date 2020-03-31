@@ -26,7 +26,7 @@ struct lista *spisakfoldera(const gchar *putanja) {
 }
 
 int napravifolder(const gchar *putanja, const gchar *ime) {
-  gchar *folder = malloc((strlen(putanja) + strlen(ime) + 2));
+  gchar *folder = malloc((strlen(putanja) + strlen(ime) + 2) * sizeof(gchar));
   if (!folder) return -1;
   sprintf(folder, "%s" KC "%s", putanja, ime);
 
@@ -34,7 +34,7 @@ int napravifolder(const gchar *putanja, const gchar *ime) {
 }
 
 int obrisifolder(const gchar *putanja, const gchar *ime) {
-  gchar *folder = malloc((strlen(putanja) + strlen(ime) + 2));
+  gchar *folder = malloc((strlen(putanja) + strlen(ime) + 2) * sizeof(gchar));
   if (!folder) return -1;
   sprintf(folder, "%s" KC "%s", putanja, ime);
 
