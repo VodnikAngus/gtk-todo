@@ -20,8 +20,10 @@ struct zadatak {
   short int prioritet;
   gchar* ime;
   gchar* datum;
+  int broj_fajlova;
   gchar** fajlovi;
   gchar* opis;
+  GtkWidget* widget;
   struct zadatak* sledeci;
 };
 

@@ -20,38 +20,72 @@ static int uporedi(const struct zadatak *z1, const struct zadatak *z2,
   return -1;
 }
 
-int dodajzadatak(struct zadaci *l, const gchar *zadatakfajl, enum uredi u) {
+static int dodajzadatak(struct zadaci *l, const gchar *zadatakfajl,
+                        enum uredi u) {
   struct zadatak *novi = malloc(sizeof(struct zadatak));
   FILE *zadatak;
   zadatak = fopen(zadatakfajl, "r");
-  fscanf(zadatak, "%hd\n", &(novi->prioritet));
+  if (!fscanf(zadatak, "%hd\n", &(novi->prioritet))) return 1;
 
-  novi->ime = malloc(51 * sizeof(gchar));
-  fgets(novi->ime, 50, zadatak);
-  novi->ime[strlen(novi->ime) - 1] = '\0';
+  int d_ime = 1;
+  char c;
+  do {
+    d_ime++;
+    c = fgetc(zadatak);
+  } while (c != '\n');
+
+  novi->ime = malloc(d_ime * sizeof(gchar));
 
   novi->datum = malloc(10 * sizeof(gchar));
-  fgets(novi->datum, 9, zadatak);
+  if (!fgets(novi->datum, 9, zadatak)) return 1;
   novi->datum[8] = '\0';
-  g_print("Fajl: %s, Prioritet: %hd Naziv: %s, datum: %s\n", zadatakfajl,
-          novi->prioritet, novi->ime, novi->datum);
 
-  int brfajlova;
-  fscanf(zadatak, "%d\n", &brfajlova);
-  g_print("Broj Fajlova: %d\n", brfajlova);
-
-  novi->fajlovi = malloc(brfajlova * sizeof(gchar *));
-  for (int i = 0; i < brfajlova; ++i) {
-    novi->fajlovi[i] = malloc(51 * sizeof(gchar));
-    fgets(novi->fajlovi[i], 50, zadatak);
-    novi->fajlovi[i][strlen(novi->fajlovi[i]) - 1] = '\0';
-    g_print("Fajl %d: %s\n", i + 1, novi->fajlovi[i]);
+  if (!fscanf(zadatak, "%d\n", &(novi->broj_fajlova))) return 1;
+  novi->fajlovi = malloc(novi->broj_fajlova * sizeof(gchar *));
+  int *d_fajl = malloc(novi->broj_fajlova * sizeof(int));
+  for (int i = 0; i < novi->broj_fajlova; ++i) {
+    d_fajl[i] = 1;
+    do {
+      d_fajl[i]++;
+      c = fgetc(zadatak);
+    } while (c != '\n');
+    novi->fajlovi[i] = malloc(d_fajl[i] * sizeof(gchar));
   }
+
+  int d_opis = 0;
+
+  do {
+    d_opis++;
+    c = fgetc(zadatak);
+  } while (c != EOF);
+
+  novi->opis = malloc(d_opis * sizeof(gchar));
+
+  fclose(zadatak);
+  zadatak = fopen(zadatakfajl, "r");
+
+  if (!fscanf(zadatak, "%hd\n", &(novi->prioritet))) return 1;
+
+  if (!fgets(novi->ime, d_ime, zadatak)) return 1;
+  novi->ime[strlen(novi->ime) - 1] = '\0';
+
+  if (!fgets(novi->datum, 9, zadatak)) return 1;
+  novi->datum[8] = '\0';
+
+  if (!fscanf(zadatak, "%d\n", &(novi->broj_fajlova))) return 1;
+
+  for (int i = 0; i < novi->broj_fajlova; ++i) {
+    if (!fgets(novi->fajlovi[i], d_fajl[i], zadatak)) return 1;
+    novi->fajlovi[i][strlen(novi->fajlovi[i]) - 1] = '\0';
+  }
+  for (int i = 0; i < d_opis; i++) {
+    novi->opis[i] = fgetc(zadatak);
+  }
+  novi->opis[d_opis - 1] = '\0';
   fclose(zadatak);
 
   struct zadatak *trenutni = l->prvi;
   if (trenutni == NULL) {
-    g_print("NULL\n");
     novi->sledeci = NULL;
     l->prvi = novi;
 
@@ -98,14 +132,22 @@ static struct zadaci *citajzadatke(const gchar *ime_liste) {
 }
 
 static gboolean hide(gpointer data) {
-  GtkRevealer *revealer = data;
+  struct zadatak *zadatak = (struct zadatak *)data;
+  GtkRevealer *revealer = GTK_REVEALER(zadatak->widget);
   gtk_revealer_set_reveal_child(revealer, FALSE);
+
+  g_print("Ime: %s, prioritet: %hd, datum: %s\n", zadatak->ime,
+          zadatak->prioritet, zadatak->datum);
+  for (int i = 0; i < zadatak->broj_fajlova; i++) {
+    g_print("\tFajl %d: %s\n", i + 1, zadatak->fajlovi[i]);
+  }
+  g_print("\tOpis: %s\n\n", zadatak->opis);
 
   return FALSE;
 }
 
-static gboolean wait(GtkApplication *app, gpointer data) {
-  g_timeout_add(300, hide, data);
+static gboolean wait(GtkWidget *app, gpointer zadatak) {
+  g_timeout_add(300, hide, zadatak);
   return FALSE;
 }
 
@@ -114,15 +156,23 @@ static void open_menu(GtkWidget *widget, gpointer data) {
                            GDK_GRAVITY_NORTH, NULL);
 }
 
-static void delete (GtkWidget *widget, gpointer data) {}
+static void delete (GtkWidget *widget, struct zadatak *zadatak) {
+  g_print("Ime: %s, prioritet: %hd, datum: %s\n", zadatak->ime,
+          zadatak->prioritet, zadatak->datum);
+  for (int i = 0; i < zadatak->broj_fajlova; i++) {
+    g_print("\tFajl %d: %s\n", i + 1, zadatak->fajlovi[i]);
+  }
+  g_print("\tOpis: %s\n\n", zadatak->opis);
+}
 
-static GtkWidget *zadtakW(char *lista, gchar *text) {
+static void zadtakW(char *lista, struct zadatak *zadatak) {
   GtkWidget *revealer = gtk_revealer_new();
   gtk_revealer_set_reveal_child(GTK_REVEALER(revealer), TRUE);
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
-  GtkWidget *check = gtk_check_button_new_with_label(text);
-  g_signal_connect(check, "toggled", G_CALLBACK(wait), revealer);
+  GtkWidget *check = gtk_check_button_new_with_label(zadatak->ime);
+  g_signal_connect(check, "toggled", G_CALLBACK(wait),
+                   (struct zadatak *)zadatak);
   gtk_box_pack_start(GTK_BOX(box), check, 1, 1, 0);
 
   gtk_widget_set_margin_bottom(box, 5);
@@ -138,7 +188,7 @@ static GtkWidget *zadtakW(char *lista, gchar *text) {
 
   GtkWidget *menu = gtk_menu_new();
   GtkWidget *menu_item = gtk_menu_item_new_with_label("oof");
-  g_signal_connect(menu_item, "activate", G_CALLBACK(delete), text);
+  g_signal_connect(menu_item, "activate", G_CALLBACK(delete), zadatak);
   gtk_widget_show(menu_item);
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
@@ -146,7 +196,7 @@ static GtkWidget *zadtakW(char *lista, gchar *text) {
   g_signal_connect(button, "clicked", G_CALLBACK(open_menu), menu);
 
   gtk_container_add(GTK_CONTAINER(revealer), box);
-  return revealer;
+  zadatak->widget = revealer;
 }
 
 GtkWidget *zadaciW(char *name) {
@@ -155,11 +205,11 @@ GtkWidget *zadaciW(char *name) {
   struct zadatak *zadatak = l->prvi;
 
   while (zadatak != NULL) {
-    GtkWidget *task = zadtakW(name, zadatak->ime);
+    zadtakW(name, zadatak);
 
-    gtk_box_pack_start(GTK_BOX(box), task, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box), zadatak->widget, FALSE, FALSE, 0);
     zadatak = zadatak->sledeci;
   }
 
-  return box;
+  return box; 
 }
