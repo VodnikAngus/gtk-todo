@@ -2,6 +2,8 @@
 
 #include "../lib/fajlovi.h"
 
+static void zadatakW(char *, struct zadatak *);
+
 static int uporedi(const struct zadatak *z1, const struct zadatak *z2,
                    enum uredi u) {
   if (z1->prioritet > z2->prioritet) return 0;
@@ -21,14 +23,14 @@ static int uporedi(const struct zadatak *z1, const struct zadatak *z2,
 }
 
 static int dodajzadatak(struct zadaci *l, const gchar *zadatakfajl,
-                        enum uredi u) {
+                        const char *zadatakfolder, enum uredi u) {
   struct zadatak *novi = malloc(sizeof(struct zadatak));
   FILE *zadatak;
   zadatak = fopen(zadatakfajl, "r");
   if (!fscanf(zadatak, "%hd\n", &(novi->prioritet))) return 1;
 
   int d_ime = 1;
-  char c;
+  gchar c;
   do {
     d_ime++;
     c = fgetc(zadatak);
@@ -36,9 +38,9 @@ static int dodajzadatak(struct zadaci *l, const gchar *zadatakfajl,
 
   novi->ime = malloc(d_ime * sizeof(gchar));
 
-  novi->datum = malloc(10 * sizeof(gchar));
-  if (!fgets(novi->datum, 9, zadatak)) return 1;
-  novi->datum[8] = '\0';
+  novi->datum = malloc(14 * sizeof(gchar));
+  if (!fgets(novi->datum, 13, zadatak)) return 1;
+  novi->datum[12] = '\0';
 
   if (!fscanf(zadatak, "%d\n", &(novi->broj_fajlova))) return 1;
   novi->fajlovi = malloc(novi->broj_fajlova * sizeof(gchar *));
@@ -69,8 +71,8 @@ static int dodajzadatak(struct zadaci *l, const gchar *zadatakfajl,
   if (!fgets(novi->ime, d_ime, zadatak)) return 1;
   novi->ime[strlen(novi->ime) - 1] = '\0';
 
-  if (!fgets(novi->datum, 9, zadatak)) return 1;
-  novi->datum[8] = '\0';
+  if (!fgets(novi->datum, 13, zadatak)) return 1;
+  novi->datum[12] = '\0';
 
   if (!fscanf(zadatak, "%d\n", &(novi->broj_fajlova))) return 1;
 
@@ -82,6 +84,12 @@ static int dodajzadatak(struct zadaci *l, const gchar *zadatakfajl,
     novi->opis[i] = fgetc(zadatak);
   }
   novi->opis[d_opis - 1] = '\0';
+
+  novi->lista = malloc((sizeof(l->ime) + 1) * sizeof(gchar));
+  strcpy(novi->lista, l->ime);
+
+  novi->ime_foldera = malloc((strlen(zadatakfolder) + 1) * sizeof(gchar));
+  strcpy(novi->ime_foldera, zadatakfolder);
   fclose(zadatak);
 
   struct zadatak *trenutni = l->prvi;
@@ -113,6 +121,8 @@ static struct zadaci *citajzadatke(const gchar *ime_liste) {
   if (!dir) exit(1);
 
   struct zadaci *l = malloc(sizeof(struct lista));
+  l->ime = malloc((sizeof(strlen(ime_liste)) + 1) * sizeof(gchar));
+  strcpy(l->ime, ime_liste);
   l->prvi = NULL;
 
   const gchar *de;
@@ -122,7 +132,7 @@ static struct zadaci *citajzadatke(const gchar *ime_liste) {
       gchar *fajl = malloc((strlen(folder) + strlen(de) + 18) * sizeof(gchar));
       sprintf(fajl, "%s" KC "%s" KC "__zadatak__.txt", folder, de);
 
-      if (dodajzadatak(l, fajl, IME)) return NULL;
+      if (dodajzadatak(l, fajl, de, DATUM)) return NULL;
     }
   }
 
@@ -131,22 +141,53 @@ static struct zadaci *citajzadatke(const gchar *ime_liste) {
   return l;
 }
 
+static void napravizadatak(GtkWidget *button, gchar *lista) {
+  struct zadatak *novi = malloc(sizeof(struct zadatak));
+  novi->lista = malloc(strlen(lista) * sizeof(gchar));
+  strcpy(novi->lista, lista);
+  novi->prioritet = 0;
+
+  novi->ime = malloc(4 * sizeof(gchar));
+  strcpy(novi->ime, "ime");
+  novi->datum = malloc(13 * sizeof(gchar));
+  strcpy(novi->datum, "202004031600");
+
+  novi->broj_fajlova = 0;
+
+  novi->opis = malloc(5 * sizeof(gchar));
+  novi->opis = "opis";
+
+  gchar *noviFolder = malloc((4 + strlen(lista)) * sizeof(gchar));
+  sprintf(noviFolder, "db" KC "%s", lista);
+  napravifolder(noviFolder, novi->ime);
+
+  gchar *noviFajl =
+      malloc((17 + strlen(noviFolder) + strlen(novi->ime)) * sizeof(gchar));
+  sprintf(noviFajl, "%s" KC "%s" KC "__zadatak__.txt", noviFolder, novi->ime);
+
+  FILE *noviF = fopen(noviFajl, "w");
+
+  fprintf(noviF, "%hd\n", novi->prioritet);
+  fprintf(noviF, "%s\n", novi->ime);
+  fprintf(noviF, "%s\n", novi->datum);
+  fprintf(noviF, "%d\n", novi->broj_fajlova);
+  for (int i = 0; i < novi->broj_fajlova; i++) {
+    fprintf(noviF, "%s\n", novi->fajlovi[i]);
+  }
+  fprintf(noviF, "%s", novi->opis);
+
+  fclose(noviF);
+}
+
 static gboolean hide(gpointer data) {
   struct zadatak *zadatak = (struct zadatak *)data;
   GtkRevealer *revealer = GTK_REVEALER(zadatak->widget);
   gtk_revealer_set_reveal_child(revealer, FALSE);
 
-  g_print("Ime: %s, prioritet: %hd, datum: %s\n", zadatak->ime,
-          zadatak->prioritet, zadatak->datum);
-  for (int i = 0; i < zadatak->broj_fajlova; i++) {
-    g_print("\tFajl %d: %s\n", i + 1, zadatak->fajlovi[i]);
-  }
-  g_print("\tOpis: %s\n\n", zadatak->opis);
-
   return FALSE;
 }
 
-static gboolean wait(GtkWidget *app, gpointer zadatak) {
+static gboolean wait(GtkWidget *widget, gpointer zadatak) {
   g_timeout_add(300, hide, zadatak);
   return FALSE;
 }
@@ -157,15 +198,13 @@ static void open_menu(GtkWidget *widget, gpointer data) {
 }
 
 static void delete (GtkWidget *widget, struct zadatak *zadatak) {
-  g_print("Ime: %s, prioritet: %hd, datum: %s\n", zadatak->ime,
-          zadatak->prioritet, zadatak->datum);
-  for (int i = 0; i < zadatak->broj_fajlova; i++) {
-    g_print("\tFajl %d: %s\n", i + 1, zadatak->fajlovi[i]);
-  }
-  g_print("\tOpis: %s\n\n", zadatak->opis);
+  wait(NULL, zadatak);
+  gchar *folder = malloc((5 + strlen(zadatak->lista)) * sizeof(gchar));
+  sprintf(folder, "db" KC "%s", zadatak->lista);
+  obrisifolder(folder, zadatak->ime_foldera);
 }
 
-static void zadtakW(char *lista, struct zadatak *zadatak) {
+static void zadatakW(char *lista, struct zadatak *zadatak) {
   GtkWidget *revealer = gtk_revealer_new();
   gtk_revealer_set_reveal_child(GTK_REVEALER(revealer), TRUE);
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -187,7 +226,7 @@ static void zadtakW(char *lista, struct zadatak *zadatak) {
   gtk_box_pack_start(GTK_BOX(box), button, 0, 0, 0);
 
   GtkWidget *menu = gtk_menu_new();
-  GtkWidget *menu_item = gtk_menu_item_new_with_label("oof");
+  GtkWidget *menu_item = gtk_menu_item_new_with_label("Obriši");
   g_signal_connect(menu_item, "activate", G_CALLBACK(delete), zadatak);
   gtk_widget_show(menu_item);
 
@@ -199,17 +238,22 @@ static void zadtakW(char *lista, struct zadatak *zadatak) {
   zadatak->widget = revealer;
 }
 
-GtkWidget *zadaciW(char *name) {
+GtkWidget *zadaciW(gchar *lista) {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  struct zadaci *l = citajzadatke(name);
+  struct zadaci *l = citajzadatke(lista);
   struct zadatak *zadatak = l->prvi;
 
   while (zadatak != NULL) {
-    zadtakW(name, zadatak);
+    zadatakW(lista, zadatak);
 
     gtk_box_pack_start(GTK_BOX(box), zadatak->widget, FALSE, FALSE, 0);
     zadatak = zadatak->sledeci;
   }
+  GtkWidget *new_button = gtk_button_new_with_label("novi");
+  g_signal_connect(new_button, "clicked", G_CALLBACK(napravizadatak), lista);
+  GtkWidget *new_button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_container_add(GTK_CONTAINER(new_button_box), new_button);
+  gtk_box_pack_start(GTK_BOX(box), new_button_box, FALSE, FALSE, 0);
 
-  return box; 
+  return box;
 }

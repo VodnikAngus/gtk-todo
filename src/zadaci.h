@@ -11,6 +11,7 @@
 enum uredi { IME, DATUM };
 
 struct zadaci {
+  gchar *ime;
   struct zadatak* prvi;
   unsigned int duz;
 };
@@ -24,6 +25,7 @@ struct zadatak {
   gchar** fajlovi;
   gchar* opis;
   GtkWidget* widget;
+  gchar *ime_foldera;
   struct zadatak* sledeci;
 };
 

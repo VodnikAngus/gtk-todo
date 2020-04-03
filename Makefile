@@ -17,6 +17,6 @@ all: ./*
 	gcc main.c ${LIBS} -o ${IZLAZ}${EXT} ${CFLAGS} && ${IZLAZ}${EXT}
 	#rm -f ./bin/${PLATFORMA}/${IZLAZ}
 
-test: ./*
+test: test.c
 	gcc test.c ${LIBS} -o test${EXT} ${CFLAGS} && ./test${EXT}
 	# rm -f test${EXT}
