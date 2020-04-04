@@ -1,3 +1,7 @@
 .vscode
 db
 test.c
+test
+test.exe
+bin/linux/to-do
+bin/windows/bin/to-do.exe
